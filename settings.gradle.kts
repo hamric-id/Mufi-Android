@@ -24,4 +24,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "Mufi"
 include(":app")
- 
+include(":feature:genres")
+include(":core:model")
+include(":core:network")

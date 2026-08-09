@@ -8,10 +8,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.hamric.feature.genres.presentation.ui.GenresScreen
+import com.hamric.feature.movies.presentation.ui.MoviesScreen
 import com.hamric.mufi.ui.theme.MufiTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -43,8 +46,27 @@ fun MufiNavigation() {
         composable("genres") {
             GenresScreen(
                 onGenreClick = { genre ->
-                    println("navigate to list movie with genre ${genre.name}")
-//                    navController.navigate("movies/${genre.id}/${genre.name}")
+                    navController.navigate("movies/${genre.id}/${genre.name}")
+                }
+            )
+        }
+
+        composable(
+            route = "movies/{genreId}/{genreName}",
+            arguments = listOf(
+                navArgument("genreId") { type = NavType.IntType },
+                navArgument("genreName") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val genreId = backStackEntry.arguments?.getInt("genreId") ?: 0
+            val genreName = backStackEntry.arguments?.getString("genreName") ?: ""
+
+            MoviesScreen(
+                genreId = genreId,
+                genreName = genreName,
+                onMovieClick = { movie ->
+                    println("navigate to details movie '${movie.title}")
+//                    navController.navigate("details/${movie.id}")
                 }
             )
         }

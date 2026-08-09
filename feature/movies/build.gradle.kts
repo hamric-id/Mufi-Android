@@ -1,5 +1,5 @@
 plugins {
-    alias(libs.plugins.android.application)
+    alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
@@ -7,30 +7,16 @@ plugins {
 }
 
 android {
-    namespace = "com.hamric.mufi"
+    namespace = "com.hamric.feature.movies"
     compileSdk {
         version = release(35)
     }
 
     defaultConfig {
-        applicationId = "com.hamric.mufi"
         minSdk = 30
-        targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = true
-            isShrinkResources = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
+        consumerProguardFiles("consumer-rules.pro")
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -41,48 +27,63 @@ android {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
         }
     }
-    buildFeatures {
+    buildFeatures{
         compose = true
     }
+    testOptions {
+        unitTests {
+            isReturnDefaultValues = true
+        }
+    }
+
 }
 
 dependencies {
+    // Core modules
     implementation(project(":core:model"))
     implementation(project(":core:network"))
-    implementation(project(":feature:genres"))
-    implementation(project(":feature:movies"))
 
-    //jetpack compose
+    // Compose
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui.tooling.preview)
     debugImplementation(libs.androidx.compose.ui.tooling)
-    implementation(libs.androidx.lifecycle.runtime.compose)
-    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.compose.runtime)
+    implementation(libs.androidx.activity.compose)
 
-    // Lifecycle
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.lifecycle.viewmodel.compose)
-
-    // Navigation
-    implementation(libs.androidx.navigation.compose)
-
-    // Hilt
+    //hilt dagger di
     implementation(libs.dagger.hilt.android)
     ksp(libs.dagger.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
 
-    // Coroutines
-    implementation(libs.kotlinx.coroutines.core)
+    //lifecycle
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+
+    //coroutines
     implementation(libs.kotlinx.coroutines.android)
 
-    // Testing
+    //image loader
+    implementation(libs.io.coil.compose)
+
+    //pagination
+    implementation(libs.androidx.paging.compose)
+    implementation(libs.androidx.paging.runtime.ktx)
+
+    //navigation
+    implementation(libs.androidx.navigation.compose)
+
+    //testing
     testImplementation(libs.junit)
-    testImplementation(libs.google.truth)
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.mockk)
     testImplementation(libs.mockito.core)
     testImplementation(libs.mockito.inline)
     testImplementation(libs.mockito.kotlin)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.androidx.arch.core.testing)
+    testImplementation(libs.google.truth)
+    testImplementation(libs.cash.turbine)
 }

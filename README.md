@@ -7,6 +7,7 @@ Developed using Android Studio Quail 1 2026.1.1 Patch 2:
 - Unit Test
 - Retrofit + Okhttp
 - Reactive Programming
+- ProGuard rules
 
 ## 🚀 Getting Started
 1. Clone the Repository

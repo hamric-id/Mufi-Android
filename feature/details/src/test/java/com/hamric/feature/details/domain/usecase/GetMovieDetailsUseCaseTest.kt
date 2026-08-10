@@ -6,13 +6,11 @@ import com.hamric.feature.details.utils.TestDataFactory
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.flow.flowOf
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class GetMovieDetailsUseCaseTest {
@@ -33,10 +31,10 @@ class GetMovieDetailsUseCaseTest {
     fun `invoke should return movie details when repository returns success`() = runTest {
 
         val expectedMovie = TestDataFactory.createMovie(id = movieId)
-        coEvery { mockRepository.getMovieDetails(movieId) } returns flowOf(Result.success(expectedMovie))
+        coEvery { mockRepository.getMovieDetails(movieId) } returns Result.success(expectedMovie)
 
 
-        val result = useCase(movieId).first()
+        val result = useCase(movieId)
 
 
         assertThat(result.isSuccess).isTrue()
@@ -47,10 +45,10 @@ class GetMovieDetailsUseCaseTest {
     fun `invoke should return failure when repository returns error`() = runTest {
 
         val exception = RuntimeException("Network error")
-        coEvery { mockRepository.getMovieDetails(movieId) } returns flowOf(Result.failure(exception))
+        coEvery { mockRepository.getMovieDetails(movieId) } returns Result.failure(exception)
 
 
-        val result = useCase(movieId).first()
+        val result = useCase(movieId)
 
 
         assertThat(result.isFailure).isTrue()

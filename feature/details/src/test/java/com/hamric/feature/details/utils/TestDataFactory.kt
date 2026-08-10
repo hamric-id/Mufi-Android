@@ -13,6 +13,7 @@ import com.hamric.core.network.response.VideosResponse
 
 object TestDataFactory {
 
+    // ========== Movie ==========
     fun createMovie(
         id: Int = 123,
         title: String = "Test Movie",
@@ -37,6 +38,33 @@ object TestDataFactory {
         )
     }
 
+
+    // ========== MovieResponse (for API) ==========
+    fun createMovieResponse(
+        id: Int = 123,
+        title: String = "Test Movie",
+        posterPath: String? = "/test.jpg",
+        backdropPath: String? = "/backdrop.jpg",
+        overview: String = "Test overview",
+        releaseDate: String = "2024-01-01",
+        voteAverage: Double = 8.5,
+        voteCount: Int = 1000,
+        genreIds: List<Int> = listOf(28, 12)
+    ): MovieResponse {
+        return MovieResponse(
+            id = id,
+            title = title,
+            posterPath = posterPath,
+            backdropPath = backdropPath,
+            overview = overview,
+            releaseDate = releaseDate,
+            voteAverage = voteAverage,
+            voteCount = voteCount,
+            genreIds = genreIds
+        )
+    }
+
+    // ========== Review ==========
     fun createReview(
         id: String = "1",
         author: String = "John Doe",
@@ -53,6 +81,17 @@ object TestDataFactory {
         )
     }
 
+    fun createReviewList(count: Int = 3): List<Review> {
+        return (1..count).map { index ->
+            createReview(
+                id = index.toString(),
+                author = "User $index",
+                content = "Review content $index"
+            )
+        }
+    }
+
+    // ========== AuthorDetails ==========
     fun createAuthorDetails(
         name: String = "John Doe",
         username: String = "johndoe",
@@ -67,6 +106,7 @@ object TestDataFactory {
         )
     }
 
+    // ========== ReviewResponse (for API) ==========
     fun createReviewResponse(
         id: String = "1",
         author: String = "John Doe",
@@ -83,6 +123,7 @@ object TestDataFactory {
         )
     }
 
+    // ========== AuthorDetailsResponse (for API) ==========
     fun createAuthorDetailsResponse(
         name: String = "John Doe",
         username: String = "johndoe",
@@ -97,6 +138,7 @@ object TestDataFactory {
         )
     }
 
+    // ========== ReviewsResponse (for API) ==========
     fun createReviewsResponse(
         page: Int = 1,
         results: List<ReviewResponse> = listOf(createReviewResponse()),
@@ -111,16 +153,7 @@ object TestDataFactory {
         )
     }
 
-    fun createReviewList(count: Int = 3): List<Review> {
-        return (1..count).map { index ->
-            createReview(
-                id = index.toString(),
-                author = "User $index",
-                content = "Review content $index"
-            )
-        }
-    }
-
+    // ========== Video ==========
     fun createVideo(
         id: String = "1",
         key: String = "abc123",
@@ -141,6 +174,7 @@ object TestDataFactory {
         )
     }
 
+    // ========== VideoResponse (for API) ==========
     fun createVideoResponse(
         id: String = "1",
         key: String = "abc123",
@@ -158,6 +192,16 @@ object TestDataFactory {
             type = type,
             official = official,
             publishedAt = publishedAt
+        )
+    }
+
+    fun createVideosResponse(
+        movieId: Int = 123,
+        results: List<VideoResponse> = listOf(createVideoResponse())
+    ): VideosResponse {
+        return VideosResponse(
+            id = movieId,
+            results = results
         )
     }
 }

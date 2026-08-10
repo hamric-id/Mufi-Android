@@ -53,11 +53,32 @@ fun MovieDetailScreen(
         viewModel.loadMovieDetails(movieId)
         viewModel.loadReviews(movieId)
     }
-
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { },
+                title = {
+                    when (val state = uiState) {
+                        is MovieDetailUiState.Loading -> {
+                            LoadingIndicator(modifier = Modifier.fillMaxSize())
+                        }
+
+                        is MovieDetailUiState.Success -> {
+                            Text(state.movie.title)
+                        }
+
+                        is MovieDetailUiState.SuccessWithError -> {
+                            Text(state.movie.title)
+                        }
+
+                        is MovieDetailUiState.Error -> {
+                            ErrorState(
+                                message = state.message,
+                                onRetry = { viewModel.retry() },
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(

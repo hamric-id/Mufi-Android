@@ -6,13 +6,11 @@ import com.hamric.feature.details.utils.TestDataFactory
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.flow.flowOf
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class GetMovieTrailerUseCaseTest {
@@ -33,10 +31,10 @@ class GetMovieTrailerUseCaseTest {
     fun `invoke should return trailer when repository returns success`() = runTest {
 
         val expectedTrailer = TestDataFactory.createVideo()
-        coEvery { mockRepository.getMovieTrailer(movieId) } returns flowOf(Result.success(expectedTrailer))
+        coEvery { mockRepository.getMovieTrailer(movieId) } returns Result.success(expectedTrailer)
 
 
-        val result = useCase(movieId).first()
+        val result = useCase(movieId)
 
 
         assertThat(result.isSuccess).isTrue()
@@ -46,10 +44,10 @@ class GetMovieTrailerUseCaseTest {
     @Test
     fun `invoke should return null when no trailer available`() = runTest {
 
-        coEvery { mockRepository.getMovieTrailer(movieId) } returns flowOf(Result.success(null))
+        coEvery { mockRepository.getMovieTrailer(movieId) } returns Result.success(null)
 
 
-        val result = useCase(movieId).first()
+        val result = useCase(movieId)
 
 
         assertThat(result.isSuccess).isTrue()
@@ -60,10 +58,10 @@ class GetMovieTrailerUseCaseTest {
     fun `invoke should return failure when repository returns error`() = runTest {
 
         val exception = RuntimeException("Network error")
-        coEvery { mockRepository.getMovieTrailer(movieId) } returns flowOf(Result.failure(exception))
+        coEvery { mockRepository.getMovieTrailer(movieId) } returns Result.failure(exception)
 
 
-        val result = useCase(movieId).first()
+        val result = useCase(movieId)
 
 
         assertThat(result.isFailure).isTrue()

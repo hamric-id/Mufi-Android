@@ -6,11 +6,8 @@ import com.hamric.core.model.Review
 import com.hamric.core.model.Video
 import kotlinx.coroutines.flow.Flow
 
-
 interface MovieDetailRepository {
-    fun getMovieDetails(movieId: Int): Flow<Result<Movie>>
-
+    suspend fun getMovieDetails(movieId: Int): Result<Movie>
+    suspend fun getMovieTrailer(movieId: Int): Result<Video?>
     fun getMovieReviews(movieId: Int): Flow<PagingData<Review>>
-
-    fun getMovieTrailer(movieId: Int): Flow<Result<Video?>>
 }

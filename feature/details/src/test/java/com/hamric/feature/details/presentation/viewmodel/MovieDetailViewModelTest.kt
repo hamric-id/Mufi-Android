@@ -39,8 +39,8 @@ class MovieDetailViewModelTest {
 
     @Before
     fun setup() {
-        coEvery { mockGetDetailsUseCase.invoke(any()) } returns flowOf(Result.success(TestDataFactory.createMovie()))
-        coEvery { mockGetTrailerUseCase.invoke(any()) } returns flowOf(Result.success(null))
+        coEvery { mockGetDetailsUseCase.invoke(any()) } returns Result.success(TestDataFactory.createMovie())
+        coEvery { mockGetTrailerUseCase.invoke(any()) } returns Result.success(null)
         coEvery { mockGetReviewsUseCase.invoke(any()) } returns flowOf(PagingData.from(emptyList()))
 
         viewModel = MovieDetailViewModel(
@@ -67,8 +67,8 @@ class MovieDetailViewModelTest {
     fun `loadMovieDetails should update state to Success with movie and trailer`() = runTest {
         val expectedMovie = TestDataFactory.createMovie(id = movieId)
         val expectedTrailer = TestDataFactory.createVideo()
-        coEvery { mockGetDetailsUseCase.invoke(movieId) } returns flowOf(Result.success(expectedMovie))
-        coEvery { mockGetTrailerUseCase.invoke(movieId) } returns flowOf(Result.success(expectedTrailer))
+        coEvery { mockGetDetailsUseCase.invoke(movieId) } returns Result.success(expectedMovie)
+        coEvery { mockGetTrailerUseCase.invoke(movieId) } returns Result.success(expectedTrailer)
 
         viewModel.loadMovieDetails(movieId)
         advanceUntilIdle()
@@ -83,8 +83,8 @@ class MovieDetailViewModelTest {
     @Test
     fun `loadMovieDetails should update state to Success with movie but no trailer`() = runTest {
         val expectedMovie = TestDataFactory.createMovie(id = movieId)
-        coEvery { mockGetDetailsUseCase.invoke(movieId) } returns flowOf(Result.success(expectedMovie))
-        coEvery { mockGetTrailerUseCase.invoke(movieId) } returns flowOf(Result.success(null))
+        coEvery { mockGetDetailsUseCase.invoke(movieId) } returns Result.success(expectedMovie)
+        coEvery { mockGetTrailerUseCase.invoke(movieId) } returns Result.success(null)
 
         viewModel.loadMovieDetails(movieId)
         advanceUntilIdle()
@@ -99,8 +99,8 @@ class MovieDetailViewModelTest {
     @Test
     fun `loadMovieDetails should update state to Error when details fetch fails`() = runTest {
         val exception = RuntimeException("Failed to load movie")
-        coEvery { mockGetDetailsUseCase.invoke(movieId) } returns flowOf(Result.failure(exception))
-        coEvery { mockGetTrailerUseCase.invoke(movieId) } returns flowOf(Result.success(null))
+        coEvery { mockGetDetailsUseCase.invoke(movieId) } returns Result.failure(exception)
+        coEvery { mockGetTrailerUseCase.invoke(movieId) } returns Result.success(null)
 
         viewModel.loadMovieDetails(movieId)
         repeat(5) { advanceUntilIdle() }
@@ -115,8 +115,8 @@ class MovieDetailViewModelTest {
     fun `loadMovieDetails should show Success when details succeed even if trailer fails`() = runTest {
         val expectedMovie = TestDataFactory.createMovie(id = movieId)
         val exception = RuntimeException("Trailer failed")
-        coEvery { mockGetDetailsUseCase.invoke(movieId) } returns flowOf(Result.success(expectedMovie))
-        coEvery { mockGetTrailerUseCase.invoke(movieId) } returns flowOf(Result.failure(exception))
+        coEvery { mockGetDetailsUseCase.invoke(movieId) } returns Result.success(expectedMovie)
+        coEvery { mockGetTrailerUseCase.invoke(movieId) } returns Result.failure(exception)
 
         viewModel.loadMovieDetails(movieId)
         advanceUntilIdle()
@@ -162,8 +162,8 @@ class MovieDetailViewModelTest {
     fun `refresh should trigger refresh and update state`() = runTest {
         val expectedMovie = TestDataFactory.createMovie(id = movieId)
         val expectedTrailer = TestDataFactory.createVideo()
-        coEvery { mockGetDetailsUseCase.invoke(movieId) } returns flowOf(Result.success(expectedMovie))
-        coEvery { mockGetTrailerUseCase.invoke(movieId) } returns flowOf(Result.success(expectedTrailer))
+        coEvery { mockGetDetailsUseCase.invoke(movieId) } returns Result.success(expectedMovie)
+        coEvery { mockGetTrailerUseCase.invoke(movieId) } returns Result.success(expectedTrailer)
 
         viewModel.loadMovieDetails(movieId)
         advanceUntilIdle()
@@ -180,12 +180,11 @@ class MovieDetailViewModelTest {
     }
 
 
-
     @Test
     fun `retry should reload movie details`() = runTest {
         val exception = RuntimeException("Failed to load movie")
-        coEvery { mockGetDetailsUseCase.invoke(movieId) } returns flowOf(Result.failure(exception))
-        coEvery { mockGetTrailerUseCase.invoke(movieId) } returns flowOf(Result.success(null))
+        coEvery { mockGetDetailsUseCase.invoke(movieId) } returns Result.failure(exception)
+        coEvery { mockGetTrailerUseCase.invoke(movieId) } returns Result.success(null)
 
         viewModel.loadMovieDetails(movieId)
         repeat(5) { advanceUntilIdle() }
@@ -193,7 +192,7 @@ class MovieDetailViewModelTest {
         assertIs<MovieDetailUiState.Error>(viewModel.uiState.value)
 
         val expectedMovie = TestDataFactory.createMovie(id = movieId)
-        coEvery { mockGetDetailsUseCase.invoke(movieId) } returns flowOf(Result.success(expectedMovie))
+        coEvery { mockGetDetailsUseCase.invoke(movieId) } returns Result.success(expectedMovie)
 
         viewModel.retry()
         repeat(5) { advanceUntilIdle() }

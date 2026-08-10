@@ -12,14 +12,12 @@ import com.hamric.feature.details.domain.usecase.GetMovieTrailerUseCase
 import com.hamric.feature.details.presentation.state.MovieDetailUiState
 import com.hamric.feature.details.presentation.state.ReviewsState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -53,83 +51,107 @@ class MovieDetailViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            movieIdTrigger
-                .flatMapLatest { movieId ->
-                    combine(
-                        getMovieDetailsUseCase(movieId),
-                        getMovieTrailerUseCase(movieId)
-                    ) { detailsResult, trailerResult ->
-                        detailsResult to trailerResult
-                    }
-                }
-                .collect { (detailsResult, trailerResult) ->
-                    handleMovieDetailsResult(detailsResult, trailerResult)
-                }
+            movieIdTrigger.collect { movieId ->
+                fetchMovieDetails(movieId)
+            }
         }
 
         viewModelScope.launch {
-            refreshTrigger
-                .flatMapLatest {
-                    val movieId = _movieId.value ?: return@flatMapLatest emptyFlow()
+            refreshTrigger.collect {
+                val movieId = _movieId.value
+                if (movieId != null) {
                     _reviews.value = null
                     _reviewsState.update { ReviewsState.Loading }
-
-                    combine(
-                        getMovieDetailsUseCase(movieId),
-                        getMovieTrailerUseCase(movieId)
-                    ) { detailsResult, trailerResult ->
-                        detailsResult to trailerResult
-                    }
-                }
-                .collect { (detailsResult, trailerResult) ->
-                    handleMovieDetailsResult(detailsResult, trailerResult)
-                    fetchAndUpdateReviews(_movieId.value ?: return@collect)
-                }
-        }
-
-        viewModelScope.launch {
-            reviewsTrigger
-                .collect { movieId ->
+                    fetchMovieDetails(movieId)
                     fetchAndUpdateReviews(movieId)
                 }
+            }
         }
 
         viewModelScope.launch {
-            retryReviewsTrigger
-                .collect {
-                    val movieId = _movieId.value
-                    if (movieId != null) {
-                        _reviews.value = null
-                        fetchAndUpdateReviews(movieId)
-                    }
+            reviewsTrigger.collect { movieId ->
+                fetchAndUpdateReviews(movieId)
+            }
+        }
+
+        viewModelScope.launch {
+            retryReviewsTrigger.collect {
+                val movieId = _movieId.value
+                if (movieId != null) {
+                    _reviews.value = null
+                    fetchAndUpdateReviews(movieId)
                 }
+            }
         }
     }
 
-    private fun handleMovieDetailsResult(
-        detailsResult: Result<com.hamric.core.model.Movie>,
-        trailerResult: Result<com.hamric.core.model.Video?>
-    ) {
-        detailsResult.fold(
-            onSuccess = { movie ->
-                if (movie.id <= 0 || movie.title.isBlank()) {
-                    _uiState.update {
-                        MovieDetailUiState.Error("Invalid movie data received")
+    private fun fetchMovieDetails(movieId: Int) {
+        if (movieId <= 0) {
+            _uiState.update { MovieDetailUiState.Error("Invalid movie ID") }
+            return
+        }
+
+        if (!_isRefreshing.value) {
+            _uiState.update { MovieDetailUiState.Loading }
+        }
+
+        _movieId.value = movieId
+
+        viewModelScope.launch {
+            try {
+                val detailsDeferred = async { getMovieDetailsUseCase(movieId) }
+                val trailerDeferred = async { getMovieTrailerUseCase(movieId) }
+
+                val detailsResult = detailsDeferred.await()
+                val trailerResult = trailerDeferred.await()
+
+                detailsResult.fold(
+                    onSuccess = { movie ->
+                        if (movie.id <= 0 || movie.title.isBlank()) {
+                            _uiState.update {
+                                MovieDetailUiState.Error("Invalid movie data received")
+                            }
+                            return@fold
+                        }
+
+                        val trailer = trailerResult.getOrNull()
+                        _uiState.update { MovieDetailUiState.Success(movie, trailer) }
+
+                        if (_isRefreshing.value) {
+                            _isRefreshing.update { false }
+                        }
+                    },
+                    onFailure = { exception ->
+                        Log.e("MovieDetailViewModel", "Error loading movie $movieId", exception)
+
+                        val message = when (exception) {
+                            is java.net.SocketTimeoutException -> "Connection timeout. Please try again."
+                            is java.io.IOException -> "Network error. Please check your connection."
+                            else -> "Unable to load movie details. Please try again."
+                        }
+
+                        val currentState = _uiState.value
+                        if (currentState is MovieDetailUiState.Success) {
+                            _uiState.update {
+                                MovieDetailUiState.SuccessWithError(
+                                    movie = currentState.movie,
+                                    trailer = currentState.trailer,
+                                    message = message
+                                )
+                            }
+                        } else {
+                            _uiState.update { MovieDetailUiState.Error(message) }
+                        }
+
+                        if (_isRefreshing.value) {
+                            _isRefreshing.update { false }
+                        }
                     }
-                    return
-                }
+                )
+            } catch (e: Exception) {
+                Log.e("MovieDetailViewModel", "Error loading movie $movieId", e)
 
-                val trailer = trailerResult.getOrNull()
-                _uiState.update { MovieDetailUiState.Success(movie, trailer) }
-
-                if (_isRefreshing.value) {
-                    _isRefreshing.update { false }
-                }
-            },
-            onFailure = { exception ->
-                Log.e("MovieDetailViewModel", "Error loading movie", exception)
-
-                val message = when (exception) {
+                val message = when (e) {
                     is java.net.SocketTimeoutException -> "Connection timeout. Please try again."
                     is java.io.IOException -> "Network error. Please check your connection."
                     else -> "Unable to load movie details. Please try again."
@@ -152,7 +174,7 @@ class MovieDetailViewModel @Inject constructor(
                     _isRefreshing.update { false }
                 }
             }
-        )
+        }
     }
 
     private fun fetchAndUpdateReviews(movieId: Int) {

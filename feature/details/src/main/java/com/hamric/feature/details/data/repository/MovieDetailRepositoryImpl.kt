@@ -12,7 +12,6 @@ import com.hamric.core.network.mapper.getTrailer
 import com.hamric.feature.details.data.paging.ReviewPagingSource
 import com.hamric.feature.details.domain.repository.MovieDetailRepository
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 
 
@@ -20,12 +19,22 @@ class MovieDetailRepositoryImpl @Inject constructor(
     private val api: TmdbApi
 ) : MovieDetailRepository {
 
-    override fun getMovieDetails(movieId: Int): Flow<Result<Movie>> = flow {
-        try {
+    override suspend fun getMovieDetails(movieId: Int): Result<Movie> {
+        return try {
             val response = api.getMovieDetails(movieId = movieId)
-            emit(Result.success(response.toDomainModel()))
+            Result.success(response.toDomainModel())
         } catch (e: Exception) {
-            emit(Result.failure(e))
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getMovieTrailer(movieId: Int): Result<Video?> {
+        return try {
+            val response = api.getMovieVideos(movieId = movieId)
+            val trailer = response.results.getTrailer()
+            Result.success(trailer)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
@@ -37,16 +46,6 @@ class MovieDetailRepositoryImpl @Inject constructor(
             ),
             pagingSourceFactory = { ReviewPagingSource(api, movieId) }
         ).flow
-    }
-
-    override fun getMovieTrailer(movieId: Int): Flow<Result<Video?>> = flow {
-        try {
-            val response = api.getMovieVideos(movieId = movieId)
-            val trailer = response.results.getTrailer()
-            emit(Result.success(trailer))
-        } catch (e: Exception) {
-            emit(Result.failure(e))
-        }
     }
 }
 

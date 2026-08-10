@@ -6,13 +6,12 @@ import com.hamric.feature.details.utils.TestDataFactory
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.flow.first
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MovieDetailRepositoryImplTest {
@@ -29,6 +28,22 @@ class MovieDetailRepositoryImplTest {
         repository = MovieDetailRepositoryImpl(mockApi)
     }
 
+    @Test
+    fun `getMovieDetails should return movie when API call is successful`() = runTest {
+
+        val mockResponse = TestDataFactory.createMovieResponse(id = movieId, title = "Test Movie")
+        coEvery { mockApi.getMovieDetails(movieId) } returns mockResponse
+
+
+        val result = repository.getMovieDetails(movieId)
+
+
+        assertThat(result.isSuccess).isTrue()
+        val movie = result.getOrNull()
+        assertThat(movie).isNotNull()
+        assertThat(movie?.id).isEqualTo(movieId)
+        assertThat(movie?.title).isEqualTo("Test Movie")
+    }
 
     @Test
     fun `getMovieDetails should return failure when API throws exception`() = runTest {
@@ -37,11 +52,9 @@ class MovieDetailRepositoryImplTest {
         coEvery { mockApi.getMovieDetails(movieId) } throws exception
 
 
-        val results = repository.getMovieDetails(movieId).take(1).toList()
+        val result = repository.getMovieDetails(movieId)
 
 
-        assertThat(results).isNotEmpty()
-        val result = results.first()
         assertThat(result.isFailure).isTrue()
         assertThat(result.exceptionOrNull()).isEqualTo(exception)
     }
@@ -62,7 +75,8 @@ class MovieDetailRepositoryImplTest {
         coEvery { mockApi.getMovieReviews(movieId = movieId, page = 1) } returns mockResponse
 
 
-        val pagingData = repository.getMovieReviews(movieId).take(1).toList().firstOrNull()
+        val result = repository.getMovieReviews(movieId)
+        val pagingData = result.first()
 
 
         assertThat(pagingData).isNotNull()
@@ -79,15 +93,48 @@ class MovieDetailRepositoryImplTest {
         coEvery { mockApi.getMovieReviews(movieId = movieId, page = 1) } returns mockResponse
 
 
-        val pagingData = repository.getMovieReviews(movieId).take(1).toList().firstOrNull()
+        val result = repository.getMovieReviews(movieId)
+        val pagingData = result.first()
 
 
         assertThat(pagingData).isNotNull()
     }
 
+    @Test
+    fun `getMovieTrailer should return trailer when available`() = runTest {
+
+        val mockTrailer = TestDataFactory.createVideoResponse(
+            key = "abc123",
+            name = "Official Trailer",
+            site = "YouTube",
+            type = "Trailer"
+        )
+        val mockResponse = TestDataFactory.createVideosResponse(results = listOf(mockTrailer))
+        coEvery { mockApi.getMovieVideos(movieId) } returns mockResponse
 
 
+        val result = repository.getMovieTrailer(movieId)
 
+
+        assertThat(result.isSuccess).isTrue()
+        val trailer = result.getOrNull()
+        assertThat(trailer).isNotNull()
+        assertThat(trailer?.key).isEqualTo("abc123")
+    }
+
+    @Test
+    fun `getMovieTrailer should return null when no trailer available`() = runTest {
+
+        val mockResponse = TestDataFactory.createVideosResponse(results = emptyList())
+        coEvery { mockApi.getMovieVideos(movieId) } returns mockResponse
+
+
+        val result = repository.getMovieTrailer(movieId)
+
+
+        assertThat(result.isSuccess).isTrue()
+        assertThat(result.getOrNull()).isNull()
+    }
 
     @Test
     fun `getMovieTrailer should return failure when API throws exception`() = runTest {
@@ -96,11 +143,9 @@ class MovieDetailRepositoryImplTest {
         coEvery { mockApi.getMovieVideos(movieId) } throws exception
 
 
-        val results = repository.getMovieTrailer(movieId).take(1).toList()
+        val result = repository.getMovieTrailer(movieId)
 
 
-        assertThat(results).isNotEmpty()
-        val result = results.first()
         assertThat(result.isFailure).isTrue()
         assertThat(result.exceptionOrNull()).isEqualTo(exception)
     }

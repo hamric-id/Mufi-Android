@@ -8,7 +8,9 @@ plugins {
 
 android {
     namespace = "com.hamric.mufi"
-    compileSdk = 35
+    compileSdk {
+        version = release(35)
+    }
 
     defaultConfig {
         applicationId = "com.hamric.mufi"
@@ -45,10 +47,17 @@ android {
 }
 
 dependencies {
+    implementation(project(":core:model"))
+    implementation(project(":core:network"))
+    implementation(project(":feature:genres"))
+    implementation(project(":feature:movies"))
+    implementation(project(":feature:details"))
+
     //jetpack compose
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.compose.ui.tooling.preview)
     debugImplementation(libs.androidx.compose.ui.tooling)
     implementation(libs.androidx.lifecycle.runtime.compose)

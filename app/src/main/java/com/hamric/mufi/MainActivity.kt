@@ -71,6 +71,7 @@ fun MufiNavigation() {
             MoviesScreen(
                 genreId = genreId,
                 genreName = genreName,
+                onBack = { navController.popBackStack() },
                 onMovieClick = { movie ->
                     navController.navigate("details/${movie.id}")
                 }
